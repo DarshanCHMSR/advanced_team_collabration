@@ -39,6 +39,7 @@ import TeamsList from './teams/TeamsList';
 import TeamChat from './teams/TeamChat';
 import CreateTeamDialog from './teams/CreateTeamDialog';
 import InvitesList from './invites/InvitesList';
+import AIAssistant from './AIAssistant';
 
 const Dashboard = () => {
   const { teamId } = useParams();
@@ -369,6 +370,9 @@ const Dashboard = () => {
           <Add />
         </Fab>
       )}
+
+      {/* AI Assistant */}
+      <AIAssistant />
     </Container>
   );
 };

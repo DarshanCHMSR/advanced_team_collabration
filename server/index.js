@@ -106,6 +106,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/projects', require('./routes/projects'));
 app.use('/api/teams', require('./routes/teams'));
 app.use('/api/invites', require('./routes/invites'));
+app.use('/api/agents', require('./routes/agents'));
 
 app.get('/', (req, res) => {
   res.send('SynergySphere - Advanced Team Collaboration Platform API');
