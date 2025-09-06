@@ -40,7 +40,12 @@ export const authAPI = {
   login: (credentials) => api.post('/auth/login', credentials),
   getMe: () => api.get('/auth/me'),
   logout: () => api.post('/auth/logout'),
-  updateProfile: (profileData) => api.put('/auth/profile', profileData)
+  updateProfile: (profileData) => api.put('/auth/profile', profileData),
+  // Generic methods for authenticated requests
+  get: (url) => api.get(url),
+  post: (url, data) => api.post(url, data),
+  put: (url, data) => api.put(url, data),
+  delete: (url) => api.delete(url)
 };
 
 // Teams API
@@ -73,6 +78,17 @@ export const invitesAPI = {
   respondToInvite: (id, status) => api.put(`/invites/${id}`, { status }),
   cancelInvite: (id) => api.delete(`/invites/${id}`),
   searchUsers: (query, teamId) => api.get(`/invites/search-users?query=${query}&teamId=${teamId}`)
+};
+
+// Meetings API
+export const meetingsAPI = {
+  getMeetings: () => api.get('/meetings/user/meetings'),
+  getMeeting: (meetingUrl) => api.get(`/meetings/${meetingUrl}`),
+  createMeeting: (meetingData) => api.post('/meetings/create', meetingData),
+  joinMeeting: (meetingUrl, password) => api.post(`/meetings/${meetingUrl}/join`, { password }),
+  leaveMeeting: (meetingUrl) => api.post(`/meetings/${meetingUrl}/leave`),
+  endMeeting: (meetingUrl) => api.post(`/meetings/${meetingUrl}/end`),
+  getTeamMeetings: (teamId) => api.get(`/meetings/team/${teamId}/meetings`)
 };
 
 export default api;
