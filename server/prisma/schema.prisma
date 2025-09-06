@@ -30,6 +30,8 @@ model User {
   createdTasks  Task[]           @relation("TaskCreator")
   assignedTasks Task[]           @relation("TaskAssignee")
   agentLogs     AgentLog[]
+  hostedMeetings Meeting[]       @relation("MeetingHost")
+  meetingParticipations MeetingParticipant[]
 }
 
 model Team {
@@ -50,6 +52,7 @@ model Team {
   projects    Project[]
   messages    Message[]
   tasks       Task[]
+  meetings    Meeting[]
 }
 
 model TeamMember {
@@ -146,6 +149,51 @@ model AgentLog {
   userId    Int
 }
 
+model Meeting {
+  id            String      @id @default(cuid())
+  title         String
+  description   String?
+  meetingUrl    String      @unique
+  startTime     DateTime
+  endTime       DateTime?
+  status        MeetingStatus @default(SCHEDULED)
+  maxParticipants Int      @default(50)
+  isRecording   Boolean     @default(false)
+  recordingUrl  String?
+  password      String?
+  waitingRoom   Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  // Relations
+  host          User        @relation("MeetingHost", fields: [hostId], references: [id])
+  hostId        Int
+  team          Team?       @relation(fields: [teamId], references: [id])
+  teamId        Int?
+  participants  MeetingParticipant[]
+  
+  @@index([meetingUrl])
+  @@index([startTime])
+}
+
+model MeetingParticipant {
+  id          Int      @id @default(autoincrement())
+  joinedAt    DateTime @default(now())
+  leftAt      DateTime?
+  role        MeetingRole @default(PARTICIPANT)
+  isMuted     Boolean  @default(false)
+  isVideoOn   Boolean  @default(true)
+  isHandRaised Boolean @default(false)
+  
+  // Relations
+  meeting     Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  meetingId   String
+  user        User     @relation(fields: [userId], references: [id])
+  userId      Int
+  
+  @@unique([meetingId, userId])
+}
+
 enum TeamMemberRole {
   OWNER
   ADMIN
@@ -178,4 +226,17 @@ enum MessageType {
   IMAGE
   FILE
   SYSTEM
+}
+
+enum MeetingStatus {
+  SCHEDULED
+  ONGOING
+  ENDED
+  CANCELLED
+}
+
+enum MeetingRole {
+  HOST
+  CO_HOST
+  PARTICIPANT
 }

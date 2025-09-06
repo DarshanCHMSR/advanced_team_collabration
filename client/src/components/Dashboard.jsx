@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -29,7 +29,8 @@ import {
   Person,
   Notifications,
   TrendingUp,
-  Schedule
+  Schedule,
+  VideoCall
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { teamsAPI, invitesAPI } from '../services/api';
@@ -39,31 +40,40 @@ import TeamsList from './teams/TeamsList';
 import TeamChat from './teams/TeamChat';
 import CreateTeamDialog from './teams/CreateTeamDialog';
 import InvitesList from './invites/InvitesList';
+import MeetingsList from './meetings/MeetingsList';
 import AIAssistant from './AIAssistant';
 
 const Dashboard = () => {
   const { teamId } = useParams();
   const navigate = useNavigate();
-  const { user, teams, setTeams, activeTeam, setActiveTeam, invites, setInvites } = useAuth();
+  const location = useLocation();
+  const { user, teams = [], setTeams, activeTeam, setActiveTeam, invites = [], setInvites } = useAuth();
   
   const [loading, setLoading] = useState(true);
   const [createTeamOpen, setCreateTeamOpen] = useState(false);
-  const [selectedView, setSelectedView] = useState('overview');
+
+  // Determine current view based on URL
+  const getCurrentView = () => {
+    if (location.pathname.includes('/meetings')) return 'meetings';
+    if (location.pathname.includes('/invites')) return 'invites';
+    if (teamId) return 'chat';
+    return 'overview';
+  };
+
+  const currentView = getCurrentView();
 
   useEffect(() => {
     fetchData();
   }, []);
 
   useEffect(() => {
-    if (teamId && teams.length > 0) {
+    if (teamId && Array.isArray(teams) && teams.length > 0) {
       const team = teams.find(t => t.id === parseInt(teamId));
       if (team) {
         setActiveTeam(team);
-        setSelectedView('chat');
       }
     } else if (!teamId && activeTeam) {
       setActiveTeam(null);
-      setSelectedView('overview');
     }
   }, [teamId, teams]);
 
@@ -129,7 +139,7 @@ const Dashboard = () => {
               </Avatar>
               <Box>
                 <Typography variant="h4" fontWeight="bold">
-                  {teams.length}
+                  {Array.isArray(teams) ? teams.length : 0}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Teams
@@ -149,7 +159,7 @@ const Dashboard = () => {
               </Avatar>
               <Box>
                 <Typography variant="h4" fontWeight="bold">
-                  {teams.reduce((total, team) => total + (team._count?.projects || 0), 0)}
+                  {Array.isArray(teams) ? teams.reduce((total, team) => total + (team._count?.projects || 0), 0) : 0}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Projects
@@ -169,7 +179,7 @@ const Dashboard = () => {
               </Avatar>
               <Box>
                 <Typography variant="h4" fontWeight="bold">
-                  {invites.filter(invite => invite.status === 'PENDING').length}
+                  {Array.isArray(invites) ? invites.filter(invite => invite.status === 'PENDING').length : 0}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Pending Invites
@@ -189,7 +199,7 @@ const Dashboard = () => {
               </Avatar>
               <Box>
                 <Typography variant="h4" fontWeight="bold">
-                  {teams.reduce((total, team) => total + (team._count?.members || 0), 0)}
+                  {Array.isArray(teams) ? teams.reduce((total, team) => total + (team._count?.members || 0), 0) : 0}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Total Members
@@ -235,9 +245,39 @@ const Dashboard = () => {
             </Typography>
             <List>
               <ListItem
-                button
+                component="button"
                 onClick={() => setCreateTeamOpen(true)}
-                sx={{ borderRadius: 1, mb: 1 }}
+                sx={{ borderRadius: 1, mb: 1, cursor: 'pointer' }}
+              >
+                <ListItemAvatar>
+                  <Avatar sx={{ bgcolor: 'primary.main' }}>
+                    <Groups />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary="Start Meeting"
+                  secondary="Create a video meeting"
+                />
+              </ListItem>
+              <ListItem
+                component="button"
+                onClick={() => navigate('/meetings')}
+                sx={{ borderRadius: 1, mb: 1, cursor: 'pointer' }}
+              >
+                <ListItemAvatar>
+                  <Avatar sx={{ bgcolor: 'secondary.main' }}>
+                    <VideoCall />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary="View Meetings"
+                  secondary="Manage your meetings"
+                />
+              </ListItem>
+              <ListItem
+                component="button"
+                onClick={() => setCreateTeamOpen(true)}
+                sx={{ borderRadius: 1, mb: 1, cursor: 'pointer' }}
               >
                 <ListItemAvatar>
                   <Avatar sx={{ bgcolor: 'primary.main' }}>
@@ -250,12 +290,27 @@ const Dashboard = () => {
                 />
               </ListItem>
               <ListItem
-                button
+                component="button"
                 onClick={() => navigate('/invites')}
-                sx={{ borderRadius: 1, mb: 1 }}
+                sx={{ borderRadius: 1, mb: 1, cursor: 'pointer' }}
               >
                 <ListItemAvatar>
-                  <Badge badgeContent={invites.filter(i => i.status === 'PENDING').length} color="error">
+                  <Avatar sx={{ bgcolor: 'warning.main' }}>
+                    <Person />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary="View Invites"
+                  secondary="Check pending invitations"
+                />
+              </ListItem>
+              <ListItem
+                component="button"
+                onClick={() => navigate('/invites')}
+                sx={{ borderRadius: 1, mb: 1, cursor: 'pointer' }}
+              >
+                <ListItemAvatar>
+                  <Badge badgeContent={Array.isArray(invites) ? invites.filter(i => i.status === 'PENDING').length : 0} color="error">
                     <Avatar sx={{ bgcolor: 'secondary.main' }}>
                       <Notifications />
                     </Avatar>
@@ -267,9 +322,9 @@ const Dashboard = () => {
                 />
               </ListItem>
               <ListItem
-                button
+                component="button"
                 onClick={() => navigate('/projects')}
-                sx={{ borderRadius: 1 }}
+                sx={{ borderRadius: 1, cursor: 'pointer' }}
               >
                 <ListItemAvatar>
                   <Avatar sx={{ bgcolor: 'success.main' }}>
@@ -345,7 +400,18 @@ const Dashboard = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      {teamId ? renderTeamView() : renderOverview()}
+      {(() => {
+        switch (currentView) {
+          case 'meetings':
+            return <MeetingsList teams={teams} />;
+          case 'invites':
+            return <InvitesList invites={invites} onInviteUpdate={fetchData} />;
+          case 'chat':
+            return renderTeamView();
+          default:
+            return renderOverview();
+        }
+      })()}
       
       {/* Create Team Dialog */}
       <CreateTeamDialog

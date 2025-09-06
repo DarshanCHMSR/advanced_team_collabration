@@ -11,6 +11,7 @@ import Register from './components/auth/Register';
 import Dashboard from './components/Dashboard';
 import Header from './components/layout/Header';
 import LoadingScreen from './components/common/LoadingScreen';
+import MeetingRoom from './components/meetings/MeetingRoom';
 
 // Create SynergySphere theme
 const theme = createTheme({
@@ -149,15 +150,25 @@ const AppContent = () => {
           }
         />
         <Route
+          path="/meeting/:meetingUrl"
+          element={
+            <ProtectedRoute>
+              <MeetingRoom />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/*"
           element={
             <ProtectedRoute>
               <Header />
               <Routes>
                 <Route path="/" element={<Dashboard />} />
+                <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/teams/:teamId?" element={<Dashboard />} />
                 <Route path="/projects" element={<Dashboard />} />
                 <Route path="/invites" element={<Dashboard />} />
+                <Route path="/meetings" element={<Dashboard />} />
               </Routes>
             </ProtectedRoute>
           }

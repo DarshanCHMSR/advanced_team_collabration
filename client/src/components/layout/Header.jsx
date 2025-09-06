@@ -24,7 +24,8 @@ import {
   AccountCircle,
   Groups,
   Assignment,
-  Mail
+  Mail,
+  VideoCall
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { authAPI } from '../../services/api';
@@ -73,6 +74,7 @@ const Header = () => {
     if (path.startsWith('/teams')) return 'teams';
     if (path.startsWith('/projects')) return 'projects';
     if (path.startsWith('/invites')) return 'invites';
+    if (path.startsWith('/meetings')) return 'meetings';
     return 'dashboard';
   };
 
@@ -135,6 +137,14 @@ const Header = () => {
               startIcon={<Groups />}
             >
               Teams
+            </Button>
+            <Button
+              color={activeTab === 'meetings' ? 'primary' : 'inherit'}
+              onClick={() => handleNavigation('/meetings')}
+              sx={{ fontWeight: activeTab === 'meetings' ? 600 : 400 }}
+              startIcon={<VideoCall />}
+            >
+              Meetings
             </Button>
             <Button
               color={activeTab === 'projects' ? 'primary' : 'inherit'}
