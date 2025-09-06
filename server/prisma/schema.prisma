@@ -1,7 +1,7 @@
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 generator client {
@@ -11,24 +11,140 @@ generator client {
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
+  username  String   @unique
   name      String?
   password  String
-  projects  Project[]
+  avatar    String?
+  isOnline  Boolean  @default(false)
+  lastSeen  DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  projects      Project[]
+  ownedTeams    Team[]           @relation("TeamOwner")
+  teamMembers   TeamMember[]
+  sentInvites   TeamInvite[]     @relation("InviteSender")
+  receivedInvites TeamInvite[]   @relation("InviteReceiver")
+  messages      Message[]
+}
+
+model Team {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  avatar      String?
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  owner       User         @relation("TeamOwner", fields: [ownerId], references: [id])
+  ownerId     Int
+  members     TeamMember[]
+  invites     TeamInvite[]
+  projects    Project[]
+  messages    Message[]
+}
+
+model TeamMember {
+  id       Int            @id @default(autoincrement())
+  role     TeamMemberRole @default(MEMBER)
+  joinedAt DateTime       @default(now())
+  
+  // Relations
+  user     User @relation(fields: [userId], references: [id])
+  userId   Int
+  team     Team @relation(fields: [teamId], references: [id])
+  teamId   Int
+  
+  @@unique([userId, teamId])
+}
+
+model TeamInvite {
+  id        Int               @id @default(autoincrement())
+  status    TeamInviteStatus  @default(PENDING)
+  message   String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  
+  // Relations
+  sender    User @relation("InviteSender", fields: [senderId], references: [id])
+  senderId  Int
+  receiver  User @relation("InviteReceiver", fields: [receiverId], references: [id])
+  receiverId Int
+  team      Team @relation(fields: [teamId], references: [id])
+  teamId    Int
+  
+  @@unique([senderId, receiverId, teamId])
 }
 
 model Project {
   id          Int      @id @default(autoincrement())
   name        String
   description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
   owner       User     @relation(fields: [ownerId], references: [id])
   ownerId     Int
+  team        Team?    @relation(fields: [teamId], references: [id])
+  teamId      Int?
   tasks       Task[]
 }
 
 model Task {
   id          Int      @id @default(autoincrement())
   title       String
+  description String?
   completed   Boolean  @default(false)
+  priority    TaskPriority @default(MEDIUM)
+  dueDate     DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
   project     Project  @relation(fields: [projectId], references: [id])
   projectId   Int
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  content   String
+  type      MessageType @default(TEXT)
+  createdAt DateTime @default(now())
+  
+  // Relations
+  user      User @relation(fields: [userId], references: [id])
+  userId    Int
+  team      Team @relation(fields: [teamId], references: [id])
+  teamId    Int
+}
+
+enum TeamMemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum TeamInviteStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  SYSTEM
 }

@@ -1,12 +1,19 @@
 {
-  "name": "server",
+  "name": "synergy-sphere-server",
   "version": "1.0.0",
-  "description": "",
+  "description": "SynergySphere - Advanced Team Collaboration Platform Server",
   "main": "index.js",
   "scripts": {
+    "dev": "node index.js",
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": [
+    "collaboration",
+    "team",
+    "websocket",
+    "real-time"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
@@ -17,7 +24,9 @@
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
-    "pg": "^8.16.3"
+    "pg": "^8.16.3",
+    "socket.io": "^4.8.1",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "prisma": "^6.15.0"
