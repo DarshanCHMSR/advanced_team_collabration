@@ -217,7 +217,7 @@ app.use('/api/projects', require('./routes/projects'));
 app.use('/api/teams', require('./routes/teams'));
 app.use('/api/invites', require('./routes/invites'));
 app.use('/api/agents', require('./routes/agents'));
-app.use('/api/meetings', require('./middleware/auth'), require('./routes/meetings'));
+app.use('/api/meetings', require('./routes/meetings'));
 
 // Health check
 app.get('/api/health', (req, res) => {

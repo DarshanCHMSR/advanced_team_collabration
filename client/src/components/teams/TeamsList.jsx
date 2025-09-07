@@ -19,7 +19,10 @@ import {
 } from '@mui/icons-material';
 
 const TeamsList = ({ teams, onTeamSelect, selectedTeam, compact = false }) => {
-  if (!teams || teams.length === 0) {
+  // Ensure teams is always an array
+  const safeTeams = Array.isArray(teams) ? teams : [];
+  
+  if (!safeTeams || safeTeams.length === 0) {
     return (
       <Box
         sx={{
@@ -44,7 +47,7 @@ const TeamsList = ({ teams, onTeamSelect, selectedTeam, compact = false }) => {
 
   return (
     <List disablePadding>
-      {teams.map((team) => {
+      {safeTeams.map((team) => {
         const isSelected = selectedTeam && selectedTeam.id === team.id;
         const memberCount = team._count?.members || 0;
         const projectCount = team._count?.projects || 0;

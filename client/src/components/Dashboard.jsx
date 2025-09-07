@@ -84,6 +84,10 @@ const Dashboard = () => {
         invitesAPI.getInvites()
       ]);
       
+      console.log('Teams API Response:', teamsResponse);
+      console.log('Teams Data:', teamsResponse.data);
+      console.log('Is teams data an array?', Array.isArray(teamsResponse.data));
+      
       setTeams(teamsResponse.data);
       setInvites(invitesResponse.data);
     } catch (error) {

@@ -35,7 +35,7 @@ import {
   Edit
 } from '@mui/icons-material';
 import { format, isToday, isTomorrow, isYesterday, isPast } from 'date-fns';
-import { authAPI } from '../../services/api';
+import { authAPI, meetingsAPI } from '../../services/api';
 import CreateMeetingDialog from './CreateMeetingDialog';
 
 const MeetingsList = ({ teams = [] }) => {
@@ -58,8 +58,8 @@ const MeetingsList = ({ teams = [] }) => {
   const fetchMeetings = async () => {
     try {
       setLoading(true);
-      const response = await authAPI.get('/meetings/user/meetings');
-      setMeetings(response.data.meetings);
+      const response = await meetingsAPI.getMeetings();
+      setMeetings(response.data.meetings || []);
     } catch (error) {
       console.error('Error fetching meetings:', error);
       setError('Failed to load meetings');
@@ -84,10 +84,8 @@ const MeetingsList = ({ teams = [] }) => {
       const urlParts = joinMeetingUrl.split('/');
       const meetingUrl = urlParts[urlParts.length - 1];
 
-      // Join the meeting
-      await authAPI.post(`/meetings/${meetingUrl}/join`, {
-        password: joinPassword
-      });
+      // Join the meeting using proper API
+      await meetingsAPI.joinMeeting(meetingUrl, joinPassword || '');
 
       // Navigate to meeting room
       navigate(`/meeting/${meetingUrl}`);
@@ -101,8 +99,8 @@ const MeetingsList = ({ teams = [] }) => {
 
   const handleStartMeeting = async (meeting) => {
     try {
-      // Join the meeting
-      await authAPI.post(`/meetings/${meeting.meetingUrl}/join`);
+      // Join the meeting using the proper API
+      await meetingsAPI.joinMeeting(meeting.meetingUrl, meeting.password || '');
       
       // Navigate to meeting room
       navigate(`/meeting/${meeting.meetingUrl}`);
@@ -120,7 +118,7 @@ const MeetingsList = ({ teams = [] }) => {
 
   const handleDeleteMeeting = async (meeting) => {
     try {
-      await authAPI.post(`/meetings/${meeting.meetingUrl}/end`);
+      await meetingsAPI.endMeeting(meeting.meetingUrl);
       setMeetings(prev => prev.filter(m => m.id !== meeting.id));
       setAnchorEl(null);
     } catch (error) {
@@ -249,27 +247,27 @@ const MeetingsList = ({ teams = [] }) => {
                       </Box>
                     }
                     secondary={
-                      <Box>
-                        <Typography variant="body2" color="text.secondary">
+                      <span>
+                        <Typography variant="body2" color="text.secondary" component="span" display="block">
                           {formatMeetingTime(meeting.startTime)}
                         </Typography>
                         {meeting.team && (
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography variant="caption" color="text.secondary" component="span" display="block">
                             Team: {meeting.team.name}
                           </Typography>
                         )}
                         {meeting.description && (
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                          <Typography variant="body2" color="text.secondary" component="span" display="block" sx={{ mt: 0.5 }}>
                             {meeting.description}
                           </Typography>
                         )}
-                        <Box display="flex" alignItems="center" gap={1} mt={0.5}>
+                        <Box component="span" display="flex" alignItems="center" gap={1} mt={0.5}>
                           <People fontSize="small" color="action" />
                           <Typography variant="caption" color="text.secondary">
                             {meeting.participants?.length || 0} participants
                           </Typography>
                         </Box>
-                      </Box>
+                      </span>
                     }
                   />
                   <ListItemSecondaryAction>

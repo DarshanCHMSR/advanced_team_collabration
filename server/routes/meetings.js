@@ -2,6 +2,7 @@ const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const { body, validationResult } = require('express-validator');
 const crypto = require('crypto');
+const auth = require('../middleware/auth');
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -21,7 +22,7 @@ const validateCreateMeeting = [
 ];
 
 // Create meeting
-router.post('/create', validateCreateMeeting, async (req, res) => {
+router.post('/create', auth, validateCreateMeeting, async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -29,7 +30,7 @@ router.post('/create', validateCreateMeeting, async (req, res) => {
     }
 
     const { title, description, startTime, endTime, password, teamId, maxParticipants, waitingRoom } = req.body;
-    const hostId = req.user.id;
+    const hostId = req.user.userId;
     
     // Generate unique meeting URL
     let meetingUrl;
@@ -107,8 +108,8 @@ router.post('/create', validateCreateMeeting, async (req, res) => {
   }
 });
 
-// Get meeting by URL
-router.get('/:meetingUrl', async (req, res) => {
+// Get meeting by URL (requires authentication)
+router.get('/:meetingUrl', auth, async (req, res) => {
   try {
     const { meetingUrl } = req.params;
     
@@ -149,7 +150,7 @@ router.get('/:meetingUrl', async (req, res) => {
     }
 
     // Check if user has access to the meeting
-    const userId = req.user.id;
+    const userId = req.user.userId;
     let hasAccess = false;
 
     // Host always has access
@@ -194,11 +195,11 @@ router.get('/:meetingUrl', async (req, res) => {
 });
 
 // Join meeting
-router.post('/:meetingUrl/join', async (req, res) => {
+router.post('/:meetingUrl/join', auth, async (req, res) => {
   try {
     const { meetingUrl } = req.params;
     const { password } = req.body;
-    const userId = req.user.id;
+    const userId = req.user.userId;
 
     const meeting = await prisma.meeting.findUnique({
       where: { meetingUrl },
@@ -237,7 +238,16 @@ router.post('/:meetingUrl/join', async (req, res) => {
     });
 
     if (existingParticipant) {
-      return res.status(400).json({ message: 'You are already in this meeting' });
+      // User is already in the meeting, just return success
+      return res.json({ 
+        message: 'Successfully joined meeting',
+        meeting: {
+          id: meeting.id,
+          title: meeting.title,
+          meetingUrl: meeting.meetingUrl,
+          startTime: meeting.startTime
+        }
+      });
     }
 
     // Add participant
@@ -279,10 +289,10 @@ router.post('/:meetingUrl/join', async (req, res) => {
 });
 
 // Leave meeting
-router.post('/:meetingUrl/leave', async (req, res) => {
+router.post('/:meetingUrl/leave', auth, async (req, res) => {
   try {
     const { meetingUrl } = req.params;
-    const userId = req.user.id;
+    const userId = req.user.userId;
 
     const meeting = await prisma.meeting.findUnique({
       where: { meetingUrl }
@@ -313,10 +323,10 @@ router.post('/:meetingUrl/leave', async (req, res) => {
 });
 
 // End meeting (host only)
-router.post('/:meetingUrl/end', async (req, res) => {
+router.post('/:meetingUrl/end', auth, async (req, res) => {
   try {
     const { meetingUrl } = req.params;
-    const userId = req.user.id;
+    const userId = req.user.userId;
 
     const meeting = await prisma.meeting.findUnique({
       where: { meetingUrl }
@@ -359,9 +369,9 @@ router.post('/:meetingUrl/end', async (req, res) => {
 });
 
 // Get user's meetings
-router.get('/user/meetings', async (req, res) => {
+router.get('/user/meetings', auth, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId;
 
     const meetings = await prisma.meeting.findMany({
       where: {
@@ -416,10 +426,11 @@ router.get('/user/meetings', async (req, res) => {
 });
 
 // Get team meetings
-router.get('/team/:teamId/meetings', async (req, res) => {
+// Get team meetings
+router.get('/team/:teamId/meetings', auth, async (req, res) => {
   try {
     const { teamId } = req.params;
-    const userId = req.user.id;
+    const userId = req.user.userId;
 
     // Verify user is a member of the team
     const teamMember = await prisma.teamMember.findUnique({
